@@ -1,45 +1,59 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { environment } from 'src/environments/environment';
-import { RespuestaMDB } from '../interfaces/interfaces';
+import { ActoresPelicula, PeliculaDetalle, RespuestaMDB } from '../interfaces/interfaces';
+import { environment } from '../../environments/environment';
 
-const URL = environment.url;
-const APIKEY = environment.apiKey
+const data = environment;
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class MoviesService {
+  constructor(private http: HttpClient) {}
+  private popuparesPage = 0;
 
-  //Inyectar: investigar
-  constructor( private http: HttpClient) { }
-
-  private ejecutarQuery<T> (query: string) {
-    query = URL + query;
-    query += `&api_key=${ APIKEY }&language=es`;
-    return this.http.get<T>( query );
+  private ejecuteQuery<T>(query: string) {
+    query = data.url + query;
+    query += `&api_key=${data.api_key}&language=es`;
+    return this.http.get<T>(query);
+  }
+  getPopulares() {
+    this.popuparesPage++;
+    const query = `/discover/movie?sort_by=popularity.desc&page=${this.popuparesPage}`;
+    return this.ejecuteQuery<RespuestaMDB>(query);
   }
 
-  //Metodos nuevos
-  getFeatures(  ){
-    const hoy = new Date();
-    const ultimoDía = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).getDate();
-    const mes = hoy.getMonth() + 1;
-    let mesString;
+  getFeature() {
+    // debugger;
+    const today = new Date();
+    const lasday = new Date(
+      today.getFullYear(),
+      today.getMonth() + 1,
+      0
+    ).getDate();
+    const month = today.getMonth() + 1;
 
-    if(mes < 10) {
-      mesString = "0" + mes;
+    let monthString;
+
+    if (month < 10) {
+      monthString = '0' + month;
     } else {
-      mesString = mes;
+      monthString = month;
     }
 
-    const inicio = `${ hoy.getFullYear() }-${ mesString }-01`;
-    const fin = `${ hoy.getFullYear() }-${ mesString }-${ultimoDía}`;
+    const start = `${today.getFullYear()}-${monthString}-01`;
+    const end = `${today.getFullYear()}-${monthString}-${lasday}`;
+    return this.ejecuteQuery<RespuestaMDB>(
+      `/discover/movie?primary_release_date.gte=${start}&primary_release_date.lte=${end}`
+    );
+  }
 
-    console.log("inicio", inicio);
-    console.log("fin", fin);
+  getPeliculaDetalle(id: number) {
+    return this.ejecuteQuery<PeliculaDetalle>(`/movie/${id}?a=1`);
+  }
 
-    return this.ejecutarQuery<RespuestaMDB>(`/discover/movie?primary_release_date.gte=${inicio}&primary_release_date.lte=${fin}`);
+  getActoresPelicula(id: number) {
+    return this.ejecuteQuery<ActoresPelicula>(`/movie/${id}/credits?a=1`);
   }
 
 }

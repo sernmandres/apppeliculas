@@ -1,31 +1,34 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { Pelicula } from '../interfaces/interfaces';
 import { MoviesService } from '../services/movies.service';
-
 
 @Component({
   selector: 'app-tab1',
   templateUrl: 'tab1.page.html',
-  styleUrls: ['tab1.page.scss']
+  styleUrls: ['tab1.page.scss'],
 })
-export class Tab1Page implements OnInit {
+export class Tab1Page {
+  constructor(private moviesService: MoviesService) {}
+  peliculasNuevas: Pelicula[] = [];
+  populares: Pelicula[] = [];
 
- //Generar una variable
- peliculasNuevas: Pelicula[] = [];
+  ngOnInit() {
+    this.moviesService.getFeature().subscribe((res) => {
+      // console.log('AWS', res.results);
+      this.peliculasNuevas = res.results;
+    });
 
- slideOpts = {
-  slidesPerView: 1.3,
-  freeMode: true
- };
+    this.getPopulares();
+  }
 
- constructor( private movieServices: MoviesService ) {}
+  cargarMas() {
+    this.getPopulares();
+  }
 
- //nuevo metodo ctrl + space
- ngOnInit() {
-   this.movieServices.getFeatures()
-   .subscribe( resp => {
-     this.peliculasNuevas = resp.results;
-   });
- }
-
+  getPopulares() {
+    this.moviesService.getPopulares().subscribe((res) => {
+      const peliculasTemp = [...this.populares, ...res.results];
+      this.populares = peliculasTemp;
+    });
+  }
 }
